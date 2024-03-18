@@ -8,7 +8,7 @@ from torchvision import transforms, datasets, utils
 import torch.optim as optim
 from tqdm import tqdm
 
-from model import AlexNet
+from model import VGG
 import os
 import torch
 import torch.nn as nn
@@ -78,7 +78,7 @@ validate_loader = torch.utils.data.DataLoader(validate_dataset,
 # print(' '.join('%5s' % classes_dict[test_labels[j].item()] for j in range(4)))
 # imshow(utils.make_grid(test_image))
 #
-net = AlexNet(num_classes=num_classes, init_weights=init_weights)
+net = VGG(num_classes=num_classes, init_weights=init_weights)
 
 net.to(device)
 
@@ -98,14 +98,15 @@ else:
     print(f"Folder '{folder_path}' already exists.")
 save_path = 'logs/bestmodel.pth'
 best_acc = 0.0
-train_steps = len(train_loader)
+train_steps= len(train_loader)
 for epoch in range(epochs):
     # train
     net.train()
     running_loss = 0.0
     t1 = time.perf_counter()  # 开始计时
     # train_bar = tqdm(train_loader, file=sys.stdout)
-    for step, data in enumerate(train_loader, start=0):
+    train_bar = tqdm(train_loader, file=sys.stdout)
+    for step, data in enumerate(train_bar):
         images, labels = data
         # 清楚之前的的梯度
         optimizer.zero_grad()
@@ -118,10 +119,14 @@ for epoch in range(epochs):
         # 打印损失
         running_loss += loss.item()
         # 打印训练过程
-        rate = (step + 1) / len(train_loader)
-        a = "*" * int(rate * 50)
-        b = "." * int((1 - rate) * 50)
-        print("\rtrain loss: {:^3.0f}%[{}->{}]{:.3f}".format(int(rate * 100), a, b, loss), end="")
+        # rate = (step + 1) / len(train_loader)
+        # a = "*" * int(rate * 50)
+        # b = "." * int((1 - rate) * 50)
+        # print("\rtrain loss: {:^3.0f}%[{}->{}]{:.3f}".format(int(rate * 100), a, b, loss), end="")
+
+        train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
+                                                                 epochs,
+                                                                 loss)
     print()
     print(time.perf_counter() - t1)
 
@@ -129,14 +134,21 @@ for epoch in range(epochs):
     net.eval()
     acc = 0.0
     with torch.no_grad():
-        for data_test in validate_loader:
-            test_images, test_labels = data_test
-            outputs = net(test_images.to(device))
+        # 调用新的接口处理打印过程
+        val_bar = tqdm(validate_loader, file=sys.stdout)
+        for val_data in val_bar:
+            val_images, val_labels = val_data
+            outputs = net(val_images.to(device))
             predict_y = torch.max(outputs, dim=1)[1]
-            acc += (predict_y == test_labels.to(device)).sum().item()
-            accurate_test = acc / val_num
-            if accurate_test > best_acc:
-                best_acc = accurate_test
+            # acc += (predict_y == test_labels.to(device)).sum().item()
+            acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
+            val_accurate = acc / val_num
+            if val_accurate > best_acc:
+                best_acc = val_accurate
                 torch.save(net.state_dict(), save_path)
-        print('[epoch %d] train_loss: %.3f test_accuracy: %.3f' % (epoch + 1, running_loss / train_steps, acc / val_num))
+        # print('[epoch %d] train_loss: %.3f test_accuracy: %.3f' % (epoch + 1, running_loss / step, acc / val_num))
+        print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
+              (epoch + 1, running_loss / train_steps, val_accurate))
 print("Finished Training")
+if __name__ == '__main__':
+    main()
