@@ -8,6 +8,7 @@ from torchvision import transforms, datasets, utils
 import torch.optim as optim
 from tqdm import tqdm
 
+from draw_loss import draw_loss
 from model import AlexNet
 import os
 import torch
@@ -17,9 +18,9 @@ import torch.nn as nn
 data_filename = "flower_data"
 batch_size = 32
 learning_rate = 0.0002
-epochs = 10
+epochs = 5
 num_classes = 5
-init_weights=True
+init_weights = True
 device = torch.device("cuda:o" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -97,8 +98,13 @@ if not os.path.exists(folder_path):
 else:
     print(f"Folder '{folder_path}' already exists.")
 save_path = 'logs/bestmodel.pth'
+loss_save_path = 'logs/training_metrics.png'
 best_acc = 0.0
 train_steps = len(train_loader)
+
+train_losses = []  # 用于保存每个epoch的训练损失
+val_accuracies = []  # 用于保存每个epoch的验证准确率
+
 # epoch 表示当前的训练轮次，即整个训练数据集被遍历的次数。在每个 epoch 中，训练数据集会被划分为多个批次（batches），step 表示当前批次的索引
 for epoch in range(epochs):
     # train
@@ -139,5 +145,10 @@ for epoch in range(epochs):
             if accurate_test > best_acc:
                 best_acc = accurate_test
                 torch.save(net.state_dict(), save_path)
-        print('[epoch %d] train_loss: %.3f test_accuracy: %.3f' % (epoch + 1, running_loss / train_steps, acc / val_num))
+        print(
+            '[epoch %d] train_loss: %.3f test_accuracy: %.3f' % (epoch + 1, running_loss / train_steps, acc / val_num))
+        # 保存训练损失
+    val_accuracies.append(accurate_test)
+    train_losses.append(running_loss / train_steps)
 print("Finished Training")
+draw_loss(epochs, train_losses, val_accuracies,loss_save_path)

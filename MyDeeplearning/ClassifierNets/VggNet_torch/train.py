@@ -8,7 +8,7 @@ from torchvision import transforms, datasets, utils
 import torch.optim as optim
 from tqdm import tqdm
 
-from model import VGG
+from model import vgg
 import os
 import torch
 import torch.nn as nn
@@ -20,6 +20,7 @@ learning_rate = 0.0002
 epochs = 10
 num_classes = 5
 init_weights=True
+model_name = "vgg16"
 device = torch.device("cuda:o" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -78,7 +79,7 @@ validate_loader = torch.utils.data.DataLoader(validate_dataset,
 # print(' '.join('%5s' % classes_dict[test_labels[j].item()] for j in range(4)))
 # imshow(utils.make_grid(test_image))
 #
-net = VGG(num_classes=num_classes, init_weights=init_weights)
+net = vgg(model_name=model_name,num_classes=num_classes, init_weights=init_weights)
 
 net.to(device)
 
@@ -150,5 +151,3 @@ for epoch in range(epochs):
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
               (epoch + 1, running_loss / train_steps, val_accurate))
 print("Finished Training")
-if __name__ == '__main__':
-    main()
