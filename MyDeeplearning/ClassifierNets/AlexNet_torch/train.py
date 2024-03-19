@@ -99,6 +99,7 @@ else:
 save_path = 'logs/bestmodel.pth'
 best_acc = 0.0
 train_steps = len(train_loader)
+# epoch 表示当前的训练轮次，即整个训练数据集被遍历的次数。在每个 epoch 中，训练数据集会被划分为多个批次（batches），step 表示当前批次的索引
 for epoch in range(epochs):
     # train
     net.train()
