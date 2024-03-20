@@ -12,7 +12,7 @@ from model import GoogLeNet
 import os
 import torch
 import torch.nn as nn
-
+aux_logits = True
 # 训练参数配置
 data_filename = "flower_data"
 batch_size = 32
@@ -98,7 +98,7 @@ validate_loader = torch.utils.data.DataLoader(validate_dataset,
 # net.load_state_dict(model_dict)
 
 
-net = GoogLeNet(num_classes=5, aux_logits=True, init_weights=True)
+net = GoogLeNet(num_classes=5, aux_logits=aux_logits, init_weights=True)
 net.to(device)
 
 # 损失函数设置
@@ -162,6 +162,8 @@ for epoch in range(epochs):
             val_images, val_labels = val_data
             outputs = net(val_images.to(device))
             predict_y = torch.max(outputs, dim=1)[1]
+            # 对于每张图片的输出结果outputs，找到最大值所在的索引，即预测的类别，存储在predict_y中。
+            # 这里使用了torch.max函数，dim=1表示沿着第一个维度（通常是类别维度）找最大值，返回的第二个返回值[1]表示返回索引。
             # acc += (predict_y == test_labels.to(device)).sum().item()
             acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
             val_accurate = acc / val_num
