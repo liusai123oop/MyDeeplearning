@@ -11,10 +11,11 @@ def main():
 
     #设置超参数
 
-    input_dim = 28*28
+
     hidden_dims = [256,128,64]
-    num_epochs = 10
-    batch_size = 128
+    num_epochs = 20
+    batch_size = 64
+    input_dim = 28 * 28*1
     learning_rate = 0.001
 
     train_dataset = datasets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
@@ -33,8 +34,11 @@ def main():
 
     # Generate a random image and its reconstruction
     with torch.no_grad():
-        z = torch.randn(1, hidden_dims[-1]).to(device)
-        xhat = model.decoder(z)
+        z = torch.randn(1, input_dim).to(device)
+        z = z.view(28, 28).cpu().numpy()
+        plt.imshow(z, cmap='gray')
+        z = model.encoder1(z)
+        xhat = model.decoder1(z)
         xhat = xhat.view(28, 28).cpu().numpy()
         plt.imshow(xhat, cmap='gray')
         plt.show()
